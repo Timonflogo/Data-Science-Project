@@ -1,5 +1,5 @@
 # set working directory 
-setwd("~/BI-2020/Data Science/Projects/Data-Science-Project")
+setwd("~/BI-2020/Data-Science/Projects/Data-Science-Project/Data")
 
 # import packages
 pacman::p_load(ISLR, dplyr, ggplot2, tidyverse, GGally, corrplot, caret, 
@@ -24,9 +24,8 @@ weather = weather[, 3:5]
 # transpose dataframe 
 weather = dcast(weather, formula = Datetime~Measure, sum, value.var = "Value")
 
+str(weather)
+# write to csv
+write.csv(x = weather, file = 'weather-by-hour.csv')
 
-##### process Cafe data #####
-# import dataset
-
-cafe = read_excel("CafeSales_byhour.xlsx")
 

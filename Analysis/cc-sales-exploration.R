@@ -1,5 +1,5 @@
 # set working directory 
-setwd("~/BI-2020/Data-Science/Projects/Data-Science-Project")
+setwd("~/BI-2020/Data-Science/Projects/Data-Science-Project/Data")
 
 # import packages
 pacman::p_load(ISLR, dplyr, ggplot2, tidyverse, GGally, corrplot, caret, 
