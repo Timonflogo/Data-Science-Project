@@ -24,7 +24,8 @@ weather = weather[, 3:5]
 # transpose dataframe 
 weather = dcast(weather, formula = Datetime~Measure, sum, value.var = "Value")
 
-
+str(weather)
 # write to csv
 write.csv(x = weather, file = 'weather-by-hour.csv')
+
 
