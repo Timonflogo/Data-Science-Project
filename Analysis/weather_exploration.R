@@ -16,36 +16,41 @@ str(weather)
 weather = weather[, -1]
 
 # plot data
-# p_temp_dew <- ggplot(weather, aes(x=Datetime, y=temp_dew)) +
-#   geom_line() + 
-#   xlab("")
-# p_temp_dew
-# 
-# p_temp_dry <- ggplot(weather, aes(x=Datetime, y=temp_dry)) +
-#   geom_line() + 
-#   xlab("")
-# p_temp_dry
-# 
-# p_wind_speed <- ggplot(weather, aes(x=Datetime, y=wind_speed)) +
-#   geom_line() + 
-#   xlab("")
-# p_wind_speed
-# 
-# p_temp_mean_past1h <- ggplot(weather, aes(x=Datetime, y=temp_mean_past1h)) +
-#   geom_line() + 
-#   xlab("")
-# p_temp_mean_past1h
-# 
-# p_pressure <- ggplot(weather, aes(x=Datetime, y=pressure)) +
-#   geom_line() + 
-#   xlab("")
-# p_pressure
-# 
-# p_clouds <- ggplot(weather, aes(x=Datetime, y=cloud_cover)) +
-#   geom_line() + 
-#   xlab("")
-# p_clouds
-# 
+p_temp_dew <- ggplot(weather, aes(x=Datetime, y=temp_dew)) +
+  geom_line() +
+  xlab("")
+p_temp_dew
+
+p_humidity<- ggplot(weather, aes(x=Datetime, y=humidity)) +
+  geom_line() +
+  xlab("")
+p_humidity
+
+p_temp_dry <- ggplot(weather, aes(x=Datetime, y=temp_dry)) +
+  geom_line() +
+  xlab("")
+p_temp_dry
+
+p_wind_speed <- ggplot(weather, aes(x=Datetime, y=wind_speed)) +
+  geom_line() +
+  xlab("")
+p_wind_speed
+
+p_temp_mean_past1h <- ggplot(weather, aes(x=Datetime, y=temp_mean_past1h)) +
+  geom_line() +
+  xlab("")
+p_temp_mean_past1h
+
+p_pressure <- ggplot(weather, aes(x=Datetime, y=pressure)) +
+  geom_line() +
+  xlab("")
+p_pressure
+
+p_clouds <- ggplot(weather, aes(x=Datetime, y=cloud_cover)) +
+  geom_line() +
+  xlab("")
+p_clouds
+
 
 ###### create facet plots for different time periods ######
 weather$year <- year(weather$Datetime)
@@ -119,3 +124,4 @@ p_temp_dry_daily + facet_wrap(~ month, nc=3)
 # these data are terrible 
 weather$temp_dew %>%
   weather$temp_dew[weather$temp_dew > 35] <- NA
+
