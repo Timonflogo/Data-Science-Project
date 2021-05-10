@@ -5,7 +5,7 @@ setwd("~/BI-2020/Data-Science/Projects/Data-Science-Project/Data")
 pacman::p_load(ISLR, dplyr, ggplot2, tidyverse, GGally, corrplot, caret, 
                e1071, MASS, class, readxl, reshape2, openair)
 
-##### process weather data #####
+##### weather data #####
 
 # import dataset
 weather = read_excel("HistoricalWeatherData2.xlsx")
@@ -27,9 +27,9 @@ weather = dcast(weather, formula = Datetime~Measure, value.var = "Value",
 
 str(weather)
 # write to csv
-write.csv(x = weather, file = 'weather-by-hour2.csv')
+# write.csv(x = weather, file = 'weather-by-hour2.csv')
 
-# Cafe data
+##### Cafe data #####
 cafe <- read_excel("cafedata_salesbyhour.xlsx")
 cafe <- cafe[, c(2,5,1,4,3)]
 str(cafe)
@@ -60,3 +60,27 @@ df[is.na(df)] <- 0
 str(df)
 
 df <- merge(x = df, y = weather, by = "Datetime", all.x = TRUE)
+
+##### sun data #####
+
+# import dataset
+sun = read_excel("SunData.xlsx")
+sun = filter(sun, sun$`Station ID` == "Horsens")
+
+
+# convert Date and Time to DateTime 
+sun$Time = format(as.POSIXct(sun$Time, format = '%Y-%m-%d %H:%M:%S'), format = "%H:%M:%S")
+sun$Datetime = as.POSIXct(paste(sun$Date, sun$Time), format="%Y-%m-%d %H:%M:%S")
+
+sun %>% 
+  str()
+
+# reduce dataframe to include only DateTime measures and Values
+sun = sun[, c(3,4,5,6)]
+
+# transpose dataframe 
+sun = dcast(sun, formula = Datetime~Measure, value.var = "Value",
+            fun.aggregate = function(x) if(length(x) == 0) NA_real_ else sum(x, na.rm = TRUE))
+
+# merge into df
+df = merge(x=df, y=sun, by = "Datetime", all.x = TRUE)
