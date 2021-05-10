@@ -3,7 +3,7 @@ setwd("~/BI-2020/Data-Science/Projects/Data-Science-Project/Data")
 
 # import packages
 pacman::p_load(ISLR, dplyr, ggplot2, tidyverse, GGally, corrplot, caret, 
-               e1071, MASS, class, readxl, reshape2)
+               e1071, MASS, class, readxl, reshape2, openair)
 
 ##### process weather data #####
 
@@ -55,8 +55,8 @@ date <- as.data.frame(seq(ymd_h("2018-01-02-00"), ymd_h("2021-05-02-24"), by = "
 names(date)[1] <- "Datetime"
 
 # merge simulated Dataframe into cafe Dataframe and replace NAs with 0
-cafe1 <- merge(x = date, y = cafe, by = "Datetime", all.x = TRUE)
-# cafe1[is.na(cafe1)] <- 0
-str(cafe1)
+df <- merge(x = date, y = cafe, by = "Datetime", all.x = TRUE)
+df[is.na(df)] <- 0
+str(df)
 
-cafe1 <- merge(x = cafe1, y = weather, by = "Datetime", all.x = TRUE)
+df <- merge(x = df, y = weather, by = "Datetime", all.x = TRUE)

@@ -106,8 +106,6 @@ p_humidity <- ggplot(weather, aes(Datetime, humidity)) +
   theme(text = element_text(size=18))
 p_humidity
 
-
-
 # by year
 p_temp_dry_daily <- ggplot(weather, aes(temp_dew, temp_dry)) +
   geom_point() +
@@ -120,8 +118,4 @@ p_temp_dry_daily
 
 p_temp_dry_daily + facet_wrap(~ month, nc=3)
 
-
-# these data are terrible 
-weather$temp_dew %>%
-  weather$temp_dew[weather$temp_dew > 35] <- NA
 

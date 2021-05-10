@@ -167,6 +167,7 @@ evaluate_naive_method()
 ```{r}
 # converting the MAE back to celsius error
 celsius_mae <- 0.2775 * std[[2]]
+celsius_mae
 ```
 
 ```{r}
@@ -236,11 +237,25 @@ plot(history)
 ```
 
 ```{r}
+# LSTM model 
+lstm <- keras_model_sequential() %>%
+  layer_lstm(units=32, input_shape = list(NULL, dim(data)[[-1]])) %>%
+  layer_lstm(units=32, input_shape = list(NULL, dim(data)[[-1]])) %>%
+  layer_dense(units=1)
 
-```
+lstm %>% compile(
+  optimizer = optimizer_rmsprop(),
+  loss = "mae"
+)
 
-```{r}
-
+history <- lstm %>% fit_generator(
+  train_gen, 
+  steps_per_epoch = 500,
+  epochs = 20,
+  validation_data = val_gen,
+  validation_steps = val_steps
+)
+plot(history)
 ```
 
 ```{r}

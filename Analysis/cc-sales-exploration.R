@@ -4,39 +4,42 @@ setwd("~/BI-2020/Data-Science/Projects/Data-Science-Project/Data")
 # import packages
 pacman::p_load(ISLR, dplyr, ggplot2, tidyverse, GGally, corrplot, caret, 
                e1071, MASS, class, readxl, reshape2, keras, scales, gridExtra,
-               grid, zoo, lubridate, forecast, tseries)
+               grid, zoo, lubridate, forecast, tseries, timetk, tidyquant,
+               tibbletime)
 
-# import data
-cafe <- read_excel("cafedata_salesbyhour.xlsx")
-cafe <- cafe[, c(2,5,1,4,3)]
-str(cafe)
+##### RUN Data-wrangling.R SCRIPT @@@@@@
 
-# combine date and time
-cafe$Datetime <- as.character(paste(cafe$DateFormat, cafe$Hour))
-cafe$Datetime <- as.POSIXct(cafe$Datetime, format = "%Y-%m-%d %H:%M")
-str(cafe)
-
-# get cafes as columns
-cafe <- cafe[, c(1,4,5)]
-cafe = dcast(cafe, formula = Datetime~Cafe, sum, value.var = "Rev_NoVAT")
-
-# rename cafe cross 
-# cafe %>% rename(cross_cafe = `Cafe Cross`)
-names(cafe)[3] <- "cross_cafe"
-
-# generate datetime for the period of the data and put into a new Dataframe
-min(cafe$Datetime)
-max(cafe$Datetime)
-
-date <- as.data.frame(seq(ymd_h("2018-01-02-00"), ymd_h("2021-05-02-24"), by = "hours"))
-names(date)[1] <- "Datetime"
-
-# merge simulated Dataframe into cafe Dataframe and replace NAs with 0
-cafe1 <- merge(x = date, y = cafe, by = "Datetime", all.x = TRUE)
-cafe1[is.na(cafe1)] <- 0
-str(cafe1)
-
-cafe1 <- merge(x = cafe1, y = weather, by = "Datetime", all.x = TRUE)
+# # import data
+# cafe <- read_excel("cafedata_salesbyhour.xlsx")
+# cafe <- cafe[, c(2,5,1,4,3)]
+# str(cafe)
+# 
+# # combine date and time
+# cafe$Datetime <- as.character(paste(cafe$DateFormat, cafe$Hour))
+# cafe$Datetime <- as.POSIXct(cafe$Datetime, format = "%Y-%m-%d %H:%M")
+# str(cafe)
+# 
+# # get cafes as columns
+# cafe <- cafe[, c(1,4,5)]
+# cafe = dcast(cafe, formula = Datetime~Cafe, sum, value.var = "Rev_NoVAT")
+# 
+# # rename cafe cross 
+# # cafe %>% rename(cross_cafe = `Cafe Cross`)
+# names(cafe)[3] <- "cross_cafe"
+# 
+# # generate datetime for the period of the data and put into a new Dataframe
+# min(cafe$Datetime)
+# max(cafe$Datetime)
+# 
+# date <- as.data.frame(seq(ymd_h("2018-01-02-00"), ymd_h("2021-05-02-24"), by = "hours"))
+# names(date)[1] <- "Datetime"
+# 
+# # merge simulated Dataframe into cafe Dataframe and replace NAs with 0
+# cafe1 <- merge(x = date, y = cafe, by = "Datetime", all.x = TRUE)
+# cafe1[is.na(cafe1)] <- 0
+# str(cafe1)
+# 
+# cafe1 <- merge(x = cafe1, y = weather, by = "Datetime", all.x = TRUE)
 
 # plot series
 p_cross <- ggplot(cafe1, aes(Datetime, cross_cafe)) +
@@ -78,13 +81,28 @@ cc.ts <- ts(cafe1$cross_cafe, start = c(2018,firstHour), frequency = 24*365)
 # view(cc.ts)
 tsdisplay(cc.ts) # two lockdowns are visible for cross cafe. 
 
+# subset dataframe to look at 2020 data
+
+names(df)[1] <- "date"
+data_2020 <- selectByDate(
+  df,
+  start = "2020-05-18",
+  end = "2020-12-08 ",
+)
+
+firstHour.2020<- 24*(as.Date("2020-5-18 00:00:00")-as.Date("2020-1-1 00:00:00"))
+
+# plot 2020 data
+cc.2020.ts <- ts(data_2020$cross_cafe, start(2020,firstHour.2020), frequency = 24*365)
+tsdisplay(cc.2020.ts)
+
 # tests
-adf.test(cc.ts) # stationary
-acf(cc.ts, lag.max = 50)
-pacf(cc.ts, lag.max = 50)
+adf.test(cc.2020.ts) # stationary
+acf(cc.2020.ts, lag.max = 50)
+pacf(cc.2020.ts, lag.max = 50)
 
 # ARIMA
-fitcc.ts <- auto.arima(cc.ts) # does not work due to memory issues
+fitcc.ts <- auto.arima(cc.2020.ts) # does not work due to memory issues
 
 ##### Aaland #####
 aa.ts <- ts(cafe1$Aaland, start = c(2018,firstHour), frequency = 24*365)
