@@ -1,0 +1,142 @@
+---
+title: "cross-cafe-ARIMA"
+author: "Timon Florian Godt"
+date: "5/10/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# set working directory
+setwd("~/BI-2020/Data-Science/Projects/Data-Science-Project/Data")
+```
+
+```{r}
+# import libraries
+pacman::p_load(ISLR, dplyr, ggplot2, tidyverse, GGally, corrplot, caret, 
+               e1071, MASS, class, readxl, reshape2, keras, scales, gridExtra,
+               grid, zoo, lubridate, forecast, tseries, timetk, tidyquant,
+               tibbletime, forcats, glue, openair, stats)
+```
+
+```{r}
+# load dataset
+cross <- read_csv("cross-cafe-final.csv")
+spec(cross)
+```
+
+```{r}
+# isolate cross cafe sales data
+cross <- cross[, c(2, 4)]
+```
+
+```{r}
+# isolate lockdown period
+names(cross)[1] <- "date"
+cross2020 <- selectByDate(
+  cross,
+  start = "2020-05-18",
+  end = "2020-12-08 ",
+)
+```
+
+```{r}
+# transform cross cafe into time series 
+firstHour.2020<- 24*(as.Date("2020-5-18 00:00:00")-as.Date("2020-12-18 00:00:00"))
+cc.ts <- ts(cross2020$cross_cafe, start(2020,firstHour.2020), frequency = 24)
+# plot cross cafe sales data
+ggplot(cross2020, aes(x = date, y = cross_cafe)) + geom_line()
+```
+
+```{r}
+ggplot(cross2020[1:240,], aes(x = 1:240, y = cross_cafe)) + geom_line()
+```
+the data seems seasonal in the sense that sales only occur during the day. it also appears that some days (most likely the weekend) have higher sales than others.
+```{r}
+# check for autocorrelation for the last 10 days
+acf(cc.ts, lag.max = 240)
+```
+Autocorrelation is pretty high, which is good for our forecasting. All autocorrelation values are inside confidence bounds. It seems as if the data is highly correlated which would explain why
+a simple naive approache could be effective. However, a ARIMA model is very good at picking up on this correlation. Let's see where we go from here.
+
+```{r}
+pacf(cc.ts, lag.max = 240)
+```
+
+```{r}
+# inspect for stationarity 
+adf.test(cc.ts)
+```
+The p-value is very small, therefore suggesting that we our series is stationary.
+```{r}
+# decompose time series to isolate a potential trend or seasonal component
+plot(decompose(cc.ts, type = "additive"))
+```
+
+```{r}
+plot(decompose(cc.ts, type = "multiplicative"))
+```
+
+```{r}
+# split data into train and test set
+size_train = round(length(cc.ts) - 240)
+train_data <- ts(cc.ts[1:size_train], start = 1)
+test_data <- ts(cc.ts[(size_train +1):length(cc.ts)], start = size_train +1)
+```
+
+```{r}
+# fit auto.arima on whole series to find out the optimal specification
+cc.fit <- auto.arima(cc.ts, max.p = 240, max.q = 240, seasonal = TRUE)
+summary(cc.fit)
+# Series: cc.ts 
+# ARIMA(2,0,0)(2,1,0)[24] 
+
+```
+
+```{r}
+# fit model on train data
+fit.train <- Arima(train_data, order = c(2,0,0), seasonal = c(2,1,0)[24])
+summary(fit.train)
+# checking model diagnostics
+tsdisplay(residuals(fit.train), main='Model Residuals')
+```
+
+```{r}
+# Arima forecast for cross cafe sales
+arima.fcast <- forecast(fit.train, h= 240)
+plot(arima.fcast)
+lines(cc.ts)
+
+accuracy(arima.fcast, train_data)
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```

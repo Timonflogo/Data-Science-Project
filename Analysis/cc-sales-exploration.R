@@ -5,7 +5,7 @@ setwd("~/BI-2020/Data-Science/Projects/Data-Science-Project/Data")
 pacman::p_load(ISLR, dplyr, ggplot2, tidyverse, GGally, corrplot, caret, 
                e1071, MASS, class, readxl, reshape2, keras, scales, gridExtra,
                grid, zoo, lubridate, forecast, tseries, timetk, tidyquant,
-               tibbletime)
+               tibbletime, openair)
 
 ##### RUN Data-wrangling.R SCRIPT @@@@@@
 

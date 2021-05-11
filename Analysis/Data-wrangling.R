@@ -3,7 +3,9 @@ setwd("~/BI-2020/Data-Science/Projects/Data-Science-Project/Data")
 
 # import packages
 pacman::p_load(ISLR, dplyr, ggplot2, tidyverse, GGally, corrplot, caret, 
-               e1071, MASS, class, readxl, reshape2, openair)
+               e1071, MASS, class, readxl, reshape2, keras, scales, gridExtra,
+               grid, zoo, lubridate, forecast, tseries, timetk, tidyquant,
+               tibbletime, forcats, glue, openair)
 
 ##### weather data #####
 
@@ -84,3 +86,6 @@ sun = dcast(sun, formula = Datetime~Measure, value.var = "Value",
 
 # merge into df
 df = merge(x=df, y=sun, by = "Datetime", all.x = TRUE)
+
+# write to csv
+write.csv(x = df, file = 'cross-cafe-final.csv')
