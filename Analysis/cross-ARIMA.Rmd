@@ -89,7 +89,10 @@ test_data <- ts(cc.ts[(size_train +1):length(cc.ts)], start = size_train +1)
 
 ```{r}
 # fit auto.arima on whole series to find out the optimal specification
-cc.fit <- auto.arima(cc.ts, max.p = 240, max.q = 240, seasonal = TRUE)
+cc.fit <- auto.arima(cc.ts,
+                     max.p = 5,
+                     max.q = 5,
+                     seasonal = TRUE)
 summary(cc.fit)
 # Series: cc.ts 
 # ARIMA(2,0,0)(2,1,0)[24] 
