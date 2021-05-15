@@ -38,7 +38,7 @@ df.set_index('Datetime')['cross_cafe'].plot(subplots=False)
 
 
 # create input dataframe
-df_input = df[['cross_cafe', 'cloud_cover', 'humidity', 'precip_dur_past1h', 'precip_past1h', 'pressure', 'temp_dew',
+df_input = df[['cross_cafe', 'cloud_cover', 'humidity', 'precip_dur_past1h', 'precip_past1h', 'temp_dew',
                'temp_dry', 'temp_max_past1h', 'temp_mean_past1h', 'temp_min_past1h', 'wind_dir', 'wind_max_per10min_past1h',
                'wind_speed', 'wind_speed_past1h', 'sun_last1h_glob']]
 
@@ -47,7 +47,7 @@ pd.set_option('display.max_columns', None)
 
 # replace NA values in dataframe 
 # cloud_cover
-# df_input.isna().sum()
+df_input.isna().sum()
 # propagate last valid observation forward to next 
 df_input.fillna(method='ffill', inplace = True)
 # df_input.isna().sum()
@@ -57,7 +57,7 @@ df_input.isna().sum()
 # no more missing values
 
 # scale input variables
-scaler = StandardScaler()
+scaler = MinMaxScaler()
 data_scaled = scaler.fit_transform(df_input)
 data_scaled
 
@@ -70,11 +70,11 @@ x_train, x_test, y_train, y_test = train_test_split(features, target, test_size=
 
 
 # specify time series generator
-lag_length=240
-batch_size=40
-num_features=16
-train_generator = TimeseriesGenerator(x_train, y_train, length=lag_length, sampling_rate=120, batch_size=batch_size)
-test_generator = TimeseriesGenerator(x_test, y_test, length=lag_length, sampling_rate=120, batch_size=batch_size)
+lag_length=480
+batch_size=32
+num_features=15
+train_generator = TimeseriesGenerator(x_train, y_train, length=lag_length, sampling_rate=1, batch_size=batch_size)
+test_generator = TimeseriesGenerator(x_test, y_test, length=lag_length, sampling_rate=1, batch_size=batch_size)
 
 # inspect train and test data
 x_train.shape
@@ -84,9 +84,12 @@ x_test.shape
 
 # build model 
 model = tf.keras.Sequential()
-model.add(tf.keras.layers.LSTM(64, activation = 'relu', input_shape= (lag_length, num_features), return_sequences=True))
+model.add(tf.keras.layers.LSTM(128, input_shape= (lag_length, num_features), return_sequences=True))
+model.add(tf.keras.layers.LeakyReLU(alpha=0.5)) 
+model.add(tf.keras.layers.LSTM(128, return_sequences=True))
+model.add(tf.keras.layers.LeakyReLU(alpha=0.5)) 
 model.add(tf.keras.layers.Dropout(0.3)) 
-model.add(tf.keras.layers.LSTM(32, return_sequences=False))
+model.add(tf.keras.layers.LSTM(64, return_sequences=False))
 model.add(tf.keras.layers.Dropout(0.3)) 
 model.add(tf.keras.layers.Dense(1))
 
@@ -102,15 +105,16 @@ model.compile(loss=tf.losses.MeanSquaredError(),
               optimizer=tf.optimizers.Adam(),
               metrics=[tf.metrics.MeanAbsoluteError()])
 
-history = model.fit_generator(train_generator, epochs=20,
+history = model.fit_generator(train_generator, epochs=50,
                     validation_data=test_generator,
                     shuffle=False,
                     callbacks=[early_stopping])
 
-tf.keras.models.save_model(model, 'C:/Users/timon/Documents/BI-2020/Data-Science/Projects/Data-Science-Project/Analysis')
+tf.keras.models.save_model('lstm-cross1.h5', 'C:/Users/timon/Documents/BI-2020/Data-Science/Projects/Data-Science-Project/Analysis')
+model = tf.keras.models.load_model('C:/Users/timon/Documents/BI-2020/Data-Science/Projects/Data-Science-Project/Analysis')
 
 # list all data in history
-print(history.history.keys())
+# print(history.history.keys())
 # summarize history for accuracy
 plt.plot(history.history['mean_absolute_error'])
 plt.plot(history.history['val_mean_absolute_error'])
