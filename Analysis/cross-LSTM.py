@@ -66,12 +66,12 @@ features=data_scaled
 target=data_scaled[:,0]
 
 # split dataset
-x_train, x_test, y_train, y_test = train_test_split(features, target, test_size=0.20, random_state=123, shuffle = False)
+x_train, x_test, y_train, y_test = train_test_split(features, target, test_size=0.1, random_state=123, shuffle = False)
 
 
 # specify time series generator
 lag_length=480
-batch_size=32
+batch_size=40
 num_features=15
 train_generator = TimeseriesGenerator(x_train, y_train, length=lag_length, sampling_rate=1, batch_size=batch_size)
 test_generator = TimeseriesGenerator(x_test, y_test, length=lag_length, sampling_rate=1, batch_size=batch_size)
@@ -84,13 +84,9 @@ x_test.shape
 
 # build model 
 model = tf.keras.Sequential()
-model.add(tf.keras.layers.LSTM(128, input_shape= (lag_length, num_features), return_sequences=True))
-model.add(tf.keras.layers.LeakyReLU(alpha=0.5)) 
-model.add(tf.keras.layers.LSTM(128, return_sequences=True))
-model.add(tf.keras.layers.LeakyReLU(alpha=0.5)) 
-model.add(tf.keras.layers.Dropout(0.3)) 
-model.add(tf.keras.layers.LSTM(64, return_sequences=False))
-model.add(tf.keras.layers.Dropout(0.3)) 
+model.add(tf.keras.layers.LSTM(128, activation = 'relu', input_shape= (lag_length, num_features), return_sequences=True))
+model.add(tf.keras.layers.LSTM(64, activation = 'relu', return_sequences=False))
+model.add(tf.keras.layers.Dropout(0.2)) 
 model.add(tf.keras.layers.Dense(1))
 
 model.summary() 
