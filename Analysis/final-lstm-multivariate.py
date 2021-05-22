@@ -9,27 +9,26 @@ import matplotlib.pyplot as plt
 from matplotlib import rc
 import numpy as np
 import pandas as pd
+import statsmodels.api as sm
 from pandas.plotting import register_matplotlib_converters
 import seaborn as sns
 import tensorflow as tf
 
-# =============================================================================
-# mpl.rcParams['figure.figsize'] = (8, 6)
-# mpl.rcParams['axes.grid'] = False
-# # set styles
-# # set seaborn style
-# register_matplotlib_converters()
-# 
-# # set seaborn style
-# sns.set(style='whitegrid', palette='muted', font_scale=1)
-# 
-# # set plotting parameters
-# rcParams['figure.figsize'] = 22, 10
-# 
-# # set random seed
-# random_seed = 20
-# np.random.seed(random_seed)
-# =============================================================================
+mpl.rcParams['figure.figsize'] = (8, 6)
+mpl.rcParams['axes.grid'] = False
+# set styles
+# set seaborn style
+register_matplotlib_converters()
+
+# set seaborn style
+sns.set(style='whitegrid', palette='muted', font_scale=1)
+
+# set plotting parameters
+rcParams['figure.figsize'] = 22, 10
+
+# set random seed
+random_seed = 20
+np.random.seed(random_seed)
 
 # load dataset
 df = pd.read_csv('C:/Users/timon/Documents/BI-2020/Data-Science/Projects/Data-Science-Project/Data/cross-cafe-final.csv')
@@ -41,13 +40,14 @@ df.info()
 # cut of corona period and get dataframe for 2 years from 2018 to 2020
 # this is the data we are going to use to test whether LSTM can yield good forecasts 
 df = df[df['Datetime'] < '2020-1-3 00:00:00']
+df.isna().sum()
 # df.set_index('Datetime')['cross_cafe'].plot(subplots=False)
 
 
 # create input dataframe
 df_input = df[['Datetime', 'cross_cafe', 'cloud_cover', 'humidity', 'precip_dur_past1h', 'precip_past1h', 'temp_dew',
                'temp_dry', 'temp_max_past1h', 'temp_mean_past1h', 'temp_min_past1h', 'wind_dir', 'wind_max_per10min_past1h',
-               'wind_speed', 'wind_speed_past1h', 'sun_last1h_glob']]
+               'wind_speed', 'wind_speed_past1h', 'sun_last1h_glob', 'pressure']]
 
 pd.set_option('display.max_columns', None) 
 # df_input.describe() # looks alright 
@@ -79,46 +79,52 @@ df_input['month'] = df_input.index.month
 df_input['is_weekend'] = ((df_input.index.dayofweek) // 5 == 1).astype(float)
 
 
+# =========================== Exploratory Data Analysis ==============================
+# plot heatmap
+# df_input = df_input.reset_index()
+# get correlations
+df_input_corr = df_input.corr()
+# create mask
+mask = np.triu(np.ones_like(df_input_corr, dtype=np.bool))
+
+sns.heatmap(df_input_corr, mask=mask, annot=True, fmt=".2f", cmap='Blues',
+            vmin=-1, vmax=1, cbar_kws={"shrink": .8})
+
+# drop values 
+df_input = df_input[['cross_cafe', 'cloud_cover', 'humidity', 'pressure',
+                     'temp_mean_past1h', 'wind_max_per10min_past1h', 'sun_last1h_glob',
+                     'hour', 'day_of_week', 'is_weekend']]
+df_input.info()
+
+
 # =============================================================================
-# # feature engineering 
-# date_time = pd.to_datetime(df_input.pop('Datetime'), format='%Y-%m-%d %H:%M:%S')
-# timestamp_s = date_time.map(datetime.datetime.timestamp)
+# # Regression
+# X = df_input[['cross_cafe', 'cloud_cover', 'humidity',
+#               'temp_mean_past1h', 'wind_max_per10min_past1h', 'sun_last1h_glob',
+#               'hour', 'day_of_week', 'is_weekend']]
+# y = df_input['cross_cafe']
 # 
-# # =============================================================================
-# # # test for important frequencies in cross_cafe
-# # fft = tf.signal.rfft(df['cross_cafe'])
-# # f_per_dataset = np.arange(0, len(fft))
-# # 
-# # n_samples_h = len(df['cross_cafe'])
-# # hours_per_year = 24*365.2524
-# # years_per_dataset = n_samples_h/(hours_per_year)
-# # 
-# # f_per_year = f_per_dataset/years_per_dataset
-# # plt.step(f_per_year, np.abs(fft))
-# # plt.xscale('log')
-# # plt.ylim(0, 400000)
-# # plt.xlim([0.1, max(plt.xlim())])
-# # plt.xticks([1, 365.2524], labels=['1/Year', '1/day'])
-# # _ = plt.xlabel('Frequency (log scale)')
-# # 
-# # # add sin and cos features to represent time signals
-# # day = 24*60*60
-# # year = (365.2425)*day
-# # 
-# # df_input['Day sin'] = np.sin(timestamp_s * (2 * np.pi / day))
-# # df_input['Day cos'] = np.cos(timestamp_s * (2 * np.pi / day))
-# # df_input['Year sin'] = np.sin(timestamp_s * (2 * np.pi / year))
-# # df_input['Year cos'] = np.cos(timestamp_s * (2 * np.pi / year))
-# # =============================================================================
+# # encode categorical values
+# X['hour'] = X['hour'].astype("category")
+# X['day_of_week'] = X['day_of_week'].astype("category")
+# X['is_weekend'] = X['is_weekend'].astype("category")
+# X.info()
 # 
+# model = sm.OLS(y, X).fit()
+# predictions = model.predict(X)
+# 
+# model.summary()
 # =============================================================================
 
 
 # create final dataframe for LSTM
-df_input = df_input[['cross_cafe', 'cloud_cover', 'humidity', 'temp_dry',
+df_input = df_input[['cross_cafe', 'cloud_cover', 'humidity', 'pressure',
                      'temp_mean_past1h', 'wind_max_per10min_past1h', 'sun_last1h_glob',
                      'hour', 'day_of_week', 'is_weekend']]
 df_input.info()
+
+# dataframe for univariate 
+# df_input = df_input['cross_cafe']
 
 # ================================== Multi Step single shot forecasting models ========================
 
@@ -148,7 +154,7 @@ df_std = (df_input - train_mean) / train_std
 df_std = df_std.melt(var_name='Column', value_name='Normalized')
 plt.figure(figsize=(12, 6))
 ax = sns.violinplot(x='Column', y='Normalized', data=df_std)
-_ = ax.set_xticklabels(df.keys(), rotation=90)
+_ = ax.set_xticklabels(df_input.keys(), rotation=90)
 # looks fine, but there are still some extreme values in our target variable
 
 # ---------------------------- create window class for indexing and offsetting ---------------------
@@ -232,7 +238,7 @@ WindowGenerator.split_window = split_window
 # -------------------------- define plot function for evaluation -------------
 
 # plot window
-def plot(self, model=None, plot_col='cross_cafe', max_subplots=3):
+def plot(self, model=None, plot_col='cross_cafe', max_subplots=3, title = 'plot'):
   inputs, labels = self.example
   plt.figure(figsize=(12, 8))
   plot_col_index = self.column_indices[plot_col]
@@ -242,6 +248,7 @@ def plot(self, model=None, plot_col='cross_cafe', max_subplots=3):
     plt.ylabel(f'{plot_col} [norm]')
     plt.plot(self.input_indices, inputs[n, :, plot_col_index],
              label='Inputs', marker='.', zorder=-10)
+    plt.title(title)
 
     if self.label_columns:
       label_col_index = self.label_columns_indices.get(plot_col, None)
@@ -330,7 +337,7 @@ WindowGenerator.example = example
 # ----------------------- define forecasting horizon --------------------------  
   
 # define forecasting length
-lags = 168
+lags = 24
 OUT_STEPS = 24
 multi_window = WindowGenerator(input_width=lags, label_width=OUT_STEPS, shift=OUT_STEPS,
                      label_columns=['cross_cafe'])
@@ -366,8 +373,8 @@ last_baseline.compile(loss=tf.losses.MeanSquaredError(),
 multi_val_performance = {}
 multi_performance = {}
 
-multi_val_performance['Last'] = last_baseline.evaluate(multi_window.val)
-multi_performance['Last'] = last_baseline.evaluate(multi_window.test, verbose=0)
+multi_val_performance['Last_obs'] = last_baseline.evaluate(multi_window.val)
+multi_performance['Last_obs'] = last_baseline.evaluate(multi_window.test, verbose=0)
 multi_window.plot(last_baseline)
 
 # ----------------- instantiate and evaluate baseline model ------------------
@@ -379,8 +386,8 @@ repeat_baseline = RepeatBaseline()
 repeat_baseline.compile(loss=tf.losses.MeanSquaredError(),
                         metrics=[tf.metrics.MeanAbsoluteError()])
 
-multi_val_performance['Repeat'] = repeat_baseline.evaluate(multi_window.val)
-multi_performance['Repeat'] = repeat_baseline.evaluate(multi_window.test, verbose=0)
+multi_val_performance['Repeat_24'] = repeat_baseline.evaluate(multi_window.val)
+multi_performance['Repeat_24'] = repeat_baseline.evaluate(multi_window.test, verbose=0)
 multi_window.plot(repeat_baseline)
 
 # ===================== Dense Neural Network =======================
@@ -428,46 +435,44 @@ multi_performance['Conv'] = multi_conv_model.evaluate(multi_window.test, verbose
 multi_window.plot(multi_conv_model)
 
 # =================== run LSTm model ===========================
-MAX_EPOCHS = 100
+multi_lstm_model = tf.keras.Sequential([
+    # Shape [batch, time, features] => [batch, lstm_units]
+    # Adding more `lstm_units` just overfits more quickly.
+    tf.keras.layers.LSTM(32, return_sequences=False),
+    # Shape => [batch, out_steps*features]
+    tf.keras.layers.Dense(OUT_STEPS*num_features,
+                          kernel_initializer=tf.initializers.zeros()),
+    # Shape => [batch, out_steps, features]
+    tf.keras.layers.Reshape([OUT_STEPS, num_features])
+])
 
-def compile_and_fit(model, window, patience=5):
-  early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
-                                                    patience=patience,
-                                                    mode='min')
+history = compile_and_fit(multi_lstm_model, multi_window)
 
-  model.compile(loss=tf.losses.MeanSquaredError(),
-                optimizer=tf.optimizers.Adam(),
-                metrics=[tf.metrics.MeanAbsoluteError()])
+IPython.display.clear_output()
 
-  history = model.fit(window.train, epochs=MAX_EPOCHS,
-                      validation_data=window.val,
-                      callbacks=[early_stopping])
-  return history
-
-lstm_model = tf.keras.models.Sequential([
-    # Shape [batch, time, features] => [batch, time, lstm_units]
-    tf.keras.layers.LSTM(20, activation = 'relu', return_sequences=True), 
-    tf.keras.layers.Dropout(0.2),
-    # Shape => [batch, time, features]
-    tf.keras.layers.Dense(units=1)
-])     
-
+multi_val_performance['LSTM'] = multi_lstm_model.evaluate(multi_window.val)
+multi_performance['LSTM'] = multi_lstm_model.evaluate(multi_window.test, verbose=0)
+multi_window.plot(multi_lstm_model)
 
 # -------------------plot evaluation metrics --------------
 
-plt.plot(history.history['loss'], label='train')
-plt.plot(history.history['val_loss'], label='validation')
-plt.legend();
-
-plt.plot(history.history['mean_absolute_error'], label='train')
-plt.plot(history.history['val_mean_absolute_error'],label='validation')
-plt.legend();
-
+# =============================================================================
+# plt.plot(history.history['loss'], label='train')
+# plt.plot(history.history['val_loss'], label='validation')
+# plt.legend();
+# 
+# plt.plot(history.history['mean_absolute_error'], label='train')
+# plt.plot(history.history['val_mean_absolute_error'],label='validation')
+# plt.legend();
+# 
+# =============================================================================
 
 x = np.arange(len(multi_performance))
 width = 0.3
+
+
 metric_name = 'mean_absolute_error'
-metric_index = lstm_model.metrics_names.index('mean_absolute_error')
+metric_index = multi_lstm_model.metrics_names.index('mean_absolute_error')
 val_mae = [v[metric_index] for v in multi_val_performance.values()]
 test_mae = [v[metric_index] for v in multi_performance.values()]
 

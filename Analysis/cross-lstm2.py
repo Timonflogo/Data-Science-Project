@@ -74,15 +74,15 @@ df_input['month'] = df_input.index.month
 # add weekend column
 df_input['is_weekend'] = ((df_input.index.dayofweek) // 5 == 1).astype(float)
 
-# # plot heatmap
-# # df_input = df_input.reset_index()
-# # get correlations
-# df_input_corr = df_input.corr()
-# # create mask
-# mask = np.triu(np.ones_like(df_input_corr, dtype=np.bool))
+# plot heatmap
+# df_input = df_input.reset_index()
+# get correlations
+df_input_corr = df_input.corr()
+# create mask
+mask = np.triu(np.ones_like(df_input_corr, dtype=np.bool))
 
-# sns.heatmap(df_input_corr, mask=mask, annot=True, fmt=".2f", cmap='Blues',
-#            vmin=-1, vmax=1, cbar_kws={"shrink": .8})
+sns.heatmap(df_input_corr, mask=mask, annot=True, fmt=".2f", cmap='Blues',
+            vmin=-1, vmax=1, cbar_kws={"shrink": .8})
 
 # df_input.to_csv('lstm-dataset.csv')
 
